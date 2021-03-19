@@ -13,7 +13,7 @@
         exit;
     }
 
-    function status200($returnData, $cache = false){
+    function status200($returnData, $table = "", $cache = false){
         $response = new Response;
         $response->setHttpStatusCode(200);
         $response->setSuccess(true);
@@ -22,14 +22,13 @@
             $response->setCache(true);
         }
         
-        if(isset($returnData["tasks"]["message"])){
-            $response->addMessage($returnData["tasks"]["message"]);
-            unset($returnData["tasks"]["message"]);
+        if(isset($returnData[$table]["message"])){
+            $response->addMessage($returnData[$table]["message"]);
+            unset($returnData[$table]["message"]);
         }
         
         if(is_array($returnData)){
             $response->setData($returnData);
-
         } else {
             $response->addMessage($returnData);
         }
@@ -38,11 +37,22 @@
         exit;
     }
 
-    function status201($message, $returnData){
+    function status201($returnData, $table = ""){
         $response = new Response;
         $response->setHttpStatusCode(201);
         $response->setSuccess(true);
-        $response->addMessage($message);
+
+        if(isset($returnData[$table]["message"])){
+            $response->addMessage($returnData[$table]["message"]);
+            unset($returnData[$table]["message"]);
+        }
+        
+        if(is_array($returnData)){
+            $response->setData($returnData);
+        } else {
+            $response->addMessage($returnData);
+        }
+
         $response->setData($returnData);
         $response->send();
         exit;
@@ -56,7 +66,7 @@
         if(is_array($e)){
             $response->addMessage($e);
         }elseif(is_string($e)){
-            $response->addMessage($e);
+            $response->addMessage([$e]);
         } else {
             $response->addMessage($e->getMessage());
         }
@@ -78,7 +88,7 @@
         $response = new Response;
         $response->setHttpStatusCode(405);
         $response->setSuccess(false);
-        $response->addMessage($message);
+        $response->addMessage([$message]);
         $response->send();
         exit;
     }
@@ -91,7 +101,7 @@
         if(is_array($e)){
             $response->addMessage($e);
         }elseif(is_string($e)){
-            $response->addMessage($e);
+            $response->addMessage([$e]);
         } else {
             $response->addMessage($e->getMessage());
         }
@@ -108,7 +118,7 @@
         if(is_array($e)){
             $response->addMessage($e);
         }elseif(is_string($e)){
-            $response->addMessage($e);
+            $response->addMessage([$e]);
         } else {
             $response->addMessage($e->getMessage());
         }

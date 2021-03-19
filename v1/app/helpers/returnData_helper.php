@@ -4,7 +4,11 @@
             $returnData['rows_returned'] = $rows;
         }
         
-        $returnData['tasks'] = $array;
+        if(isset($array["data"])){
+            $returnData[$array["data"]] = $array;
+            unset($returnData[$array["data"]]["data"]);
+        }
+        
         return $returnData;
     }
 

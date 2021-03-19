@@ -3,7 +3,8 @@
     require_once "helpers/response_helper.php";
     require_once "helpers/returnData_helper.php";
     require_once "helpers/sanitize_helper.php";
+    require_once "helpers/trueOrFalse_helper.php";
 
     spl_autoload_register(function($className){
-        require_once "libraries/$className.php";
+        require_once "libs/$className.php";
     });
