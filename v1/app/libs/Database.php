@@ -1,0 +1,150 @@
+<?php 
+    class Database {
+        private static $host_m = DB_HOST_M;
+        private static $user_m = DB_USER_M;
+        private static $pass_m = DB_PASS_M;
+        private static $name_m = DB_NAME_M;
+
+        private static $host_w = DB_HOST_W;
+        private static $user_w = DB_USER_W;
+        private static $pass_w = DB_PASS_W;
+        private static $name_w = DB_NAME_W;
+
+        private static $dbh;
+        private $stm;
+        private static $error;
+
+        private static $masterDBConnection;
+        private static $readDBConnection;
+
+        public static function connectMasterDB(){
+            if(self::$masterDBConnection === null){
+                $dsn = "mysql:host=" . self::$host_m . ";dbname=" . self::$name_m;
+                $options = array(
+                    PDO::ATTR_PERSISTENT => true,
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                );
+                
+                try{
+                    self::$masterDBConnection = new PDO($dsn, self::$user_m, self::$pass_m, $options);
+                } catch(PDOException $e){
+                    self::$error = $e->getMessage();
+                    PDOException(self::$error, "Database connection error");
+                }
+            }
+
+            self::$dbh = self::$masterDBConnection;
+        }
+
+        public static function connectReadDB(){
+            if(self::$readDBConnection === null){
+                $dsn = "mysql:host=" . self::$host_w . ";dbname=" . self::$name_w;
+                $options = array(
+                    PDO::ATTR_PERSISTENT => true,
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                );
+                
+                try{
+                    self::$readDBConnection = new PDO($dsn, self::$user_w, self::$pass_w, $options);
+                } catch(PDOException $e){
+                    self::$error = $e->getMessage();
+                    PDOException(self::$error, "Database connection error");
+                }
+            }
+
+            self::$dbh = self::$readDBConnection;
+        }
+
+        public function query($sql){
+            try{
+                $this->stm = self::$dbh->prepare($sql);
+
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+
+        public function bind($param, $value, $type = null){
+            if(is_null($type)){
+                switch(true){
+                    case is_int($value):
+                        $type = PDO::PARAM_INT;
+                        break;
+                    case is_bool($value):
+                        $type = PDO::PARAM_BOOL;
+                        break;
+                    case is_null($value):
+                        $type = PDO::PARAM_NULL;
+                        break;
+                    default:
+                        $type = PDO::PARAM_STR;
+                }
+            }
+            
+            $this->stm->bindValue($param, $value, $type);
+        }
+
+        public function execute(){
+            try{
+                return $this->stm->execute();
+
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+
+        public function resultSet(){
+            try{
+                $this->execute();
+                return $this->stm->fetchAll(PDO::FETCH_OBJ);
+
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+
+        public function single(){
+            try{
+                $this->execute();
+                return $this->stm->fetch(PDO::FETCH_OBJ);
+
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+
+        public function rowCount(){
+            try{
+                return $this->stm->rowCount();
+
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+
+        public function fetchColumn(){
+            try{
+                $this->execute();
+                return $this->stm->fetchColumn();
+                
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+
+        public function lastInsertId(){
+            try{
+                return self::$dbh->lastInsertId();
+                
+            } catch(PDOException $e) {
+                self::$error = $e->getMessage();
+                PDOException(self::$error, "Database query error");
+            }
+        }
+    }
