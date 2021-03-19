@@ -1,5 +1,5 @@
 <?php 
-    class TaskException extends Exception {}
+    class CategoryException extends Exception {}
 
     class CategoryValidator {
         private $_id;
@@ -21,7 +21,7 @@
 
         public function setId($id){
             if(($id !== null) && (!is_numeric($id) || $id <= 0 || $id > 9223372036854775807 || $this->_id !== null)){
-                throw new TaskException('Task Id error');
+                throw new CategoryException('Category Id error');
             }
 
             $this->_id = $id;
@@ -29,7 +29,7 @@
 
         public function setTitle($title){
             if(strlen($title) < 0 || strlen($title) > 20){
-                throw new TaskException('Task title error');
+                throw new CategoryException('Category title error');
             }
 
             $this->_title = $title;
