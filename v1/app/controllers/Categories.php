@@ -1,5 +1,8 @@
 <?php 
     class Categories extends BaseController {
+        private $singular = "Category";
+        private $plural = "categories";
+
         public function __construct()
         {
             $this->categoryModel = $this->model('Category');
@@ -45,8 +48,8 @@
                         try{
                             $category = new CategoryValidator($latestInfo->category_id, $latestInfo->category_title);
                             $array[] = $category->returnAsArray();
-                            $array['data'] = "categories";
-                            $array['message'] = "Category created";
+                            $array['data'] = $this->plural;
+                            $array['message'] = "$this->singular created";
                             
                             $returnData = returnData($rows, $array);
                             status200($returnData, $array['data']);
@@ -56,7 +59,7 @@
                         } 
 
                     } else {
-                        status500("There was an issue creating a new category. Please try again.");
+                        status500("There was an issue creating a new $this->singular. Please try again.");
                     }
                 }
 
@@ -70,13 +73,13 @@
                         $array[] = $category->returnAsArray();
                     }
 
-                    $array['data'] = "categories";
+                    $array['data'] = $this->plural;
                     $returnData = returnData($rows, $array);
                     status200($returnData, false, true);
                 }
 
                 if(!is_numeric($id)){
-                    status400("Category ID must be numeric");
+                    status400("$this->singular Id must be numeric");
                 }
 
                 $category = $this->categoryModel->getSingleCategory($id);
@@ -87,7 +90,7 @@
                         $category = new CategoryValidator($category->category_id, $category->category_title);
                         $array[] = $category->returnAsArray();
 
-                        $array['data'] = "categories";
+                        $array['data'] = $this->plural;
                         $returnData = returnData($rows, $array);
                         status200($returnData, true);
                         
@@ -95,12 +98,12 @@
                         status500($e);
                     } 
                 } else {
-                    status404("Category not found");
+                    status404("$this->singular not found");
                 }
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH'){
                 if($id === "" || !is_numeric($id)){
-                    status400("Category ID cannot be empty and must be numeric");
+                    status400("$this->singular Id cannot be empty and must be numeric");
                 }
 
                 if($_SERVER['CONTENT_TYPE'] !== 'application/json'){
@@ -146,8 +149,8 @@
                             try{
                                 $category = new CategoryValidator($updateInfo->category_id, $updateInfo->category_title);
                                 $array[] = $category->returnAsArray();
-                                $array['data'] = "categories";
-                                $array['message'] = "Category updated";
+                                $array['data'] = $this->plural;
+                                $array['message'] = "$this->singular updated";
                                 
                                 $returnData = returnData($rows, $array);
                                 status200($returnData, $array['data']);
@@ -156,36 +159,36 @@
                                 status500($e);
                             } 
                         } else {
-                            status404("Category not found");
+                            status404("$this->singular not found");
                         }
                         
                     } catch(CategoryException $e){
                         status400($e);
                     } 
                 else:
-                    status404("Category not found");
+                    status404("$this->singular not found");
                 endif;
                 
             } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
                 if($id === ""){
-                    status404("No category found to delete");
+                    status404("No $this->singular found to delete");
                 }
 
                 if(!is_numeric($id)){
-                    status400("Category Id must be numeric");
+                    status400("$this->singular Id must be numeric");
                 }
 
                 $categoryToDelete = $this->categoryModel->getSingleCategory($id);
-                empty($categoryToDelete) ? status404("Category not found") : false;
+                empty($categoryToDelete) ? status404("$this->singular not found") : false;
                 $category = $this->categoryModel->deleteCategory($id);
-                $rows = $category === true ? 1 : status500("Failed to delete category");
+                $rows = $category === true ? 1 : status500("Failed to delete $this->singular");
 
                 if($category):
                     try{
                         $category = new CategoryValidator($categoryToDelete->category_id, $categoryToDelete->category_title);
                         $array[] = $category->returnAsArray();
-                        $array['data'] = "categories";
-                        $array['message'] = "Category deleted";
+                        $array['data'] = $this->plural;
+                        $array['message'] = "$this->singular deleted";
                         
                         $returnData = returnData($rows, $array);
                         status200($returnData, $array['data']);
@@ -194,7 +197,7 @@
                         status500($e);
                     } 
                 else:
-                    status404("Category not found");
+                    status404("$this->singular not found");
                 endif;
 
             } else {
@@ -231,7 +234,7 @@
                 foreach($rows as $row){
                     $row = new CategoryValidator($row->category_id, $row->category_title);
                     $array[] = $row->returnAsArray();
-                    $array['data'] = "categories";
+                    $array['data'] = $this->plural;
                 }
 
                 $hasNextPage = $currentPage < $numPages;

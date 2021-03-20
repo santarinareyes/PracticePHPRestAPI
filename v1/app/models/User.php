@@ -84,4 +84,48 @@
             $this->db->bind(":offset", $offset);
             return $this->db->resultSet();
         }
+
+        public function updateUser($query, $id, $newFirstname, $newLastname, $newUsername, $newEmail, $newPassword, $newRole){
+            $this->db->connectMasterDB();
+            $this->db->query("UPDATE users SET ".$query." WHERE user_id = :id");
+            $this->db->bind(":id", $id);
+
+            if($newFirstname != ""){
+                $this->db->bind(":firstname", $newFirstname);
+            }
+
+            if($newLastname != ""){
+                $this->db->bind(":lastname", $newLastname);
+            }
+
+            if($newUsername != ""){
+                $this->db->bind(":username", $newUsername);
+            }
+
+            if($newEmail != ""){
+                $this->db->bind(":email", $newEmail);
+            }
+
+            if($newPassword != ""){
+                $this->db->bind(":password", $newPassword);
+            }
+
+            if($newRole != ""){
+                $this->db->bind(":role", $newRole);
+            }
+
+            $this->db->execute();
+
+            $rowCount = $this->db->rowCount();
+            if($rowCount === 0){
+                status500("Failed to update task");
+            }
+        }
+
+        public function getUpdatedUser($id){
+            $this->db->connectMasterDB();
+            $this->db->query("SELECT * FROM users WHERE user_id = :id");
+            $this->db->bind(":id", $id);
+            return $this->db->single();
+        }
     }

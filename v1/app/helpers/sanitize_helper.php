@@ -21,8 +21,3 @@
         $string = trim($string);
         return $string;
    }
-
-    function sanitizePassword($string){
-        $string = strip_tags($string);
-        return $string;
-   }

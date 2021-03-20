@@ -1,5 +1,8 @@
 <?php 
     class Users extends BaseController {
+        private $singular = "User";
+        private $plural = "users";
+
         public function __construct()
         {
             $this->userModel = $this->model('User');
@@ -32,7 +35,7 @@
                 if((isset($jsonData->role) && sanitizeString($jsonData->role) != 'Admin') || strlen($jsonData->firstname) < 1 || strlen($jsonData->firstname) > 255 || strlen($jsonData->lastname) < 1 || strlen($jsonData->lastname) > 255 || strlen($jsonData->username) < 1 || strlen($jsonData->username) > 255 || !filter_var($jsonData->email, FILTER_VALIDATE_EMAIL) || strlen($jsonData->email) < 1 || strlen($jsonData->email) > 255 || strlen($jsonData->password) < 1 || strlen($jsonData->password) > 255){
 
                     $error_message = [];
-                    $jsonData->role != 'admin' ? array_push($error_message, "Set role to 'admin' or remove the role row to set to user") : false;
+                    $jsonData->role != 'admin' ? array_push($error_message, "Set role to 'admin' or remove the role row to automatically set role to user") : false;
                     strlen($jsonData->firstname) < 1 ? array_push($error_message, "Firstname cannot be blank") : false;
                     strlen($jsonData->firstname) > 255 ? array_push($error_message, "Firstname cannot be greater than 255 characters (Your input: ".strlen($jsonData->firstname)." characters)") : false;
                     strlen($jsonData->lastname) < 1 ? array_push($error_message, "Lastname cannot be blank") : false;
@@ -54,7 +57,7 @@
                 $lastname = sanitizeString($jsonData->lastname);
                 $username = sanitizeUsername($jsonData->username);
                 $email = sanitizeEmail($jsonData->email);
-                $password = sanitizePassword($jsonData->password);
+                $password = $jsonData->password;
 
                 $checkUserExist = $this->userModel->checkUserExist($username, $email);
 
@@ -92,8 +95,8 @@
                     try{
                         $user = new UserValidator($latestInfo->user_id, $latestInfo->firstname, $latestInfo->lastname, $latestInfo->username, $latestInfo->email, $latestInfo->role);
                         $array[] = $user->returnAsArray();
-                        $array['data'] = "users";
-                        $array['message'] = "User created";
+                        $array['data'] = $this->plural;
+                        $array['message'] = "$this->singular created";
                         
                         $returnData = returnData($rows, $array);
                         status200($returnData, $array['data']);
@@ -103,7 +106,7 @@
                     } 
 
                 } else {
-                    status500("There was an issue creating a user account. Please try again.");
+                    status500("There was an issue creating a new $this->singular. Please try again.");
                 }
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){
@@ -116,7 +119,7 @@
                         $array[] = $user->returnAsArray();
                     }
 
-                    $array['data'] = "users";
+                    $array['data'] = $this->plural;
                     $returnData = returnData($rows, $array);
                     status200($returnData, false, true);
                 }
@@ -130,7 +133,7 @@
                         $array[] = $user->returnAsArray();
                     }
 
-                    $array['data'] = "users";
+                    $array['data'] = $this->plural;
                     $returnData = returnData($rows, $array);
                     status200($returnData, false, true);
                 }
@@ -144,13 +147,13 @@
                         $array[] = $user->returnAsArray();
                     }
 
-                    $array['data'] = "users";
+                    $array['data'] = $this->plural;
                     $returnData = returnData($rows, $array);
                     status200($returnData, false, true);
                 }
 
                 if(!is_numeric($id)){
-                    status400("User ID must be numeric");
+                    status400("$this->singular Id must be numeric");
                 }
 
                 $singleUser = $this->userModel->getSingleUser($id);
@@ -160,7 +163,7 @@
                     try{
                         $user = new UserValidator($singleUser->user_id, $singleUser->firstname, $singleUser->lastname, $singleUser->username, $singleUser->email, $singleUser->role);
                         $array[] = $user->returnAsArray();
-                        $array['data'] = "users";
+                        $array['data'] = $this->plural;
                         
                         $returnData = returnData($rows, $array);
                         status200($returnData);
@@ -169,9 +172,176 @@
                         status500($e);
                     } 
                 } else {
-                    status404("User not found");
+                    status404("$this->singular not found");
                 }
 
+            } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH'){
+                if($id === "" || !is_numeric($id)){
+                    status400("$this->singular Id cannot be empty and must be numeric");
+                }
+
+                if($_SERVER['CONTENT_TYPE'] !== 'application/json'){
+                    status400("Content type header is not set to JSON");
+                }
+
+                $updateData = file_get_contents('php://input');
+
+                if(!$jsonData = json_decode($updateData)){
+                    status400("Request body is not valid JSON");
+                }
+                
+                $firstname = false;
+                $lastname = false;
+                $username = false;
+                $email = false;
+                $password = false;
+                $role = false;
+
+                $query = "";
+
+                if(isset($jsonData->firstname)){
+                    $firstname = true;
+                    $query .= "firstname = :firstname, ";
+                }
+
+                if(isset($jsonData->lastname)){
+                    $lastname = true;
+                    $query .= "lastname = :lastname, ";
+                }
+
+                if(isset($jsonData->username)){
+                    $username = true;
+                    $query .= "username = :username, ";
+                }
+
+                if(isset($jsonData->email)){
+                    $email = true;
+                    $query .= "email = :email, ";
+                }
+
+                if(isset($jsonData->password)){
+                    $password = true;
+                    $query .= "password = :password, ";
+                }
+
+                if(isset($jsonData->role)){
+                    $role = true;
+                    $query .= "role = :role, ";
+                }
+
+                $query = rtrim($query, ", ");
+
+                if($firstname === false && $lastname === false && $username === false && $email === false && $password === false && $role === false){
+                    status400("All fields cannot be empty");
+                }
+                
+                $row = $this->userModel->getSingleUser($id);
+                
+                if(!empty($row)):
+                    try{
+                        $user = new UserValidator($row->user_id, $row->firstname, $row->lastname, $row->username, $row->email, $row->role);
+
+                        $newFirstname = "";
+                        $newLastname = "";
+                        $newUsername = "";
+                        $newEmail = "";
+                        $newPassword = "";
+                        $newRole = "";
+                        $error_message = [];
+
+                        if($firstname === true){
+                            strlen($jsonData->firstname) < 1 ? array_push($error_message, "Firstname cannot be blank") : false;
+                            strlen($jsonData->firstname) > 255 ? array_push($error_message, "Firstname cannot be greater than 255 characters (Your input: ".strlen($jsonData->firstname)." characters)") : false;
+                            $user->setFirstname($jsonData->firstname);
+                            $newFirstname = sanitizeString($user->getFirstname());
+                        }
+
+                        if($lastname === true){
+                            strlen($jsonData->lastname) < 1 ? array_push($error_message, "Lastname cannot be blank") : false;
+                            strlen($jsonData->lastname) > 255 ? array_push($error_message, "Lastname cannot be greater than 255 characters (Your input: ".strlen($jsonData->lastname)." characters)") : false;
+                            $user->setLastname($jsonData->lastname);
+                            $newLastname = sanitizeString($user->getLastname());
+                        }
+
+                        if($username === true){
+                            str_contains($jsonData->username, " ") ? array_push($error_message, "Username cannot have spaces") : false;
+                            strlen($jsonData->username) < 1 ? array_push($error_message, "Username cannot be blank") : false;
+                            strlen($jsonData->username) > 255 ? array_push($error_message, "Username cannot be greater than 255 characters (Your input: ".strlen($jsonData->username)." characters)") : false;
+                            $user->setUsername($jsonData->username);
+                            $newUsername = sanitizeUsername($user->getUsername());
+                        }
+
+                        if($email === true){
+                            !filter_var($jsonData->email, FILTER_VALIDATE_EMAIL) ? array_push($error_message, "Email is invalid") : false;
+                            str_contains($jsonData->email, " ") ? array_push($error_message, "Email cannot have spaces") : false;
+                            strlen($jsonData->email) < 1 ? array_push($error_message, "Email cannot be blank") : false;
+                            strlen($jsonData->email) > 255 ? array_push($error_message, "Email cannot be greater than 255 characters (Your input: ".strlen($jsonData->username)." characters)") : false;
+                            $user->setEmail($jsonData->email);
+                            $newEmail = sanitizeEmail($user->getEmail()); 
+                        }
+
+                        if($username === true || $email === true) {
+                            $checkUserExist = $this->userModel->checkUserExist($newUsername, $newEmail);
+
+                            if(!empty($checkUserExist)){
+                                $existArray = [];
+            
+                                if(isset($checkUserExist->email) && $checkUserExist->email == $newEmail){
+                                    array_push($existArray, "Email already exist");
+                                }
+            
+                                if(isset($checkUserExist->username) && $checkUserExist->username == $newUsername){
+                                    array_push($existArray, "Username already exist");
+                                }
+            
+                                status409($existArray);
+                            }
+                        }
+
+                        if($password === true){
+                            strlen($jsonData->password) < 1 ? array_push($error_message, "Password cannot be blank") : false;
+                            strlen($jsonData->password) > 255 ? array_push($error_message, "Password cannot be greater than 255 characters (Your input: ".strlen($jsonData->password)." characters)") : false;
+                            $newPassword = password_hash($jsonData->password, PASSWORD_DEFAULT);
+                        }
+
+                        if($role === true){
+                            $jsonData->role != 'admin' ? array_push($error_message, "Set role to 'admin' or remove the role row to automatically set role to user") : false;
+                            $user->setRole($jsonData->role);
+                            $newRole = sanitizeString($user->getRole()); 
+                        }
+
+                        if(!empty($error_message)){
+                            status400($error_message);
+                        }
+
+                        $this->userModel->updateUser($query, $id, $newFirstname, $newLastname, $newUsername, $newEmail, $newPassword, $newRole);
+
+                        $updatedUser = $this->userModel->getUpdatedUser($id);
+                        $rows = count(array($updatedUser));
+
+                        if(!empty($updatedUser)){
+                            try{
+                                $user = new UserValidator($updatedUser->user_id, $updatedUser->firstname, $updatedUser->lastname, $updatedUser->username, $updatedUser->email, $updatedUser->role);
+                                $array[] = $user->returnAsArray();
+                                $array['data'] = $this->plural;
+                                
+                                $returnData = returnData($rows, $array);
+                                status200($returnData);
+                                
+                            } catch(UserException $e){
+                                status500($e);
+                            } 
+                        } else {
+                            status404("$this->singular not found");
+                        }
+                        
+                    } catch(UserException $e){
+                        status400($e);
+                    } 
+                else:
+                    status404("$this->singular not found");
+                endif;
+                
             } else {
                 status405("Request method not allowed");
             }
@@ -206,7 +376,7 @@
                 foreach($rows as $row){
                     $row = new UserValidator($row->user_id, $row->firstname, $row->lastname, $row->username, $row->email, $row->role);
                     $array[] = $row->returnAsArray();
-                    $array['data'] = "users";
+                    $array['data'] = $this->plural;
                 }
 
                 $hasNextPage = $currentPage < $numPages;
