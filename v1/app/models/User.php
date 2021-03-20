@@ -70,20 +70,6 @@
             return $this->db->resultSet();
         }
 
-        public function countAllUsers(){
-            $this->db->query("SELECT count(*) FROM users");
-            return $this->db->fetchColumn();
-        }
-
-        public function getUsersPagination($limitPerPage, $offset){
-            $this->db->query("SELECT * FROM users 
-                              ORDER BY user_id ASC
-                              LIMIT :limit OFFSET :offset");
-            $this->db->bind(":limit", $limitPerPage);
-            $this->db->bind(":offset", $offset);
-            return $this->db->resultSet();
-        }
-
         public function updateUser($query, $id, $newFirstname, $newLastname, $newUsername, $newEmail, $newPassword, $newRole){
             $this->db->connectMasterDB();
             $this->db->query("UPDATE users SET ".$query." WHERE user_id = :id");
@@ -133,5 +119,19 @@
             $this->db->query("DELETE FROM users WHERE user_id = :id");
             $this->db->bind(":id", $id);
             return trueOrFalse($this->db->execute());
+        }
+
+        public function countAllUsers(){
+            $this->db->query("SELECT count(*) FROM users");
+            return $this->db->fetchColumn();
+        }
+
+        public function getUsersPagination($limitPerPage, $offset){
+            $this->db->query("SELECT * FROM users 
+                              ORDER BY user_id ASC
+                              LIMIT :limit OFFSET :offset");
+            $this->db->bind(":limit", $limitPerPage);
+            $this->db->bind(":offset", $offset);
+            return $this->db->resultSet();
         }
     }

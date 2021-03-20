@@ -48,20 +48,6 @@
             return $this->db->resultSet();
         }
 
-        public function countAllCategories(){
-            $this->db->query("SELECT count(*) FROM categories");
-            return $this->db->fetchColumn();
-        }
-
-        public function getCategoriesPagination($limitPerPage, $offset){
-            $this->db->query("SELECT * FROM categories 
-                              ORDER BY category_id ASC
-                              LIMIT :limit OFFSET :offset");
-            $this->db->bind(":limit", $limitPerPage);
-            $this->db->bind(":offset", $offset);
-            return $this->db->resultSet();
-        }
-
         public function updateCategory($data){
             $this->db::connectMasterDB();
             $this->db->query("UPDATE categories SET category_title = :title 
@@ -83,5 +69,19 @@
             $this->db->query("DELETE FROM categories WHERE category_id = :id");
             $this->db->bind(":id", $id);
             return trueOrFalse($this->db->execute());
+        }
+
+        public function countAllCategories(){
+            $this->db->query("SELECT count(*) FROM categories");
+            return $this->db->fetchColumn();
+        }
+
+        public function getCategoriesPagination($limitPerPage, $offset){
+            $this->db->query("SELECT * FROM categories 
+                              ORDER BY category_id ASC
+                              LIMIT :limit OFFSET :offset");
+            $this->db->bind(":limit", $limitPerPage);
+            $this->db->bind(":offset", $offset);
+            return $this->db->resultSet();
         }
     }
