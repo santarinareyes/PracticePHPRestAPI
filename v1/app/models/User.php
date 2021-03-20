@@ -128,4 +128,10 @@
             $this->db->bind(":id", $id);
             return $this->db->single();
         }
+
+        public function deleteUser($id){
+            $this->db->query("DELETE FROM users WHERE user_id = :id");
+            $this->db->bind(":id", $id);
+            return trueOrFalse($this->db->execute());
+        }
     }

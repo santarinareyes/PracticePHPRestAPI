@@ -178,14 +178,14 @@
                     status400("$this->singular Id must be numeric");
                 }
 
-                $categoryToDelete = $this->categoryModel->getSingleCategory($id);
-                empty($categoryToDelete) ? status404("$this->singular not found") : false;
+                $rowToDelete = $this->categoryModel->getSingleCategory($id);
+                empty($rowToDelete) ? status404("$this->singular not found") : false;
                 $category = $this->categoryModel->deleteCategory($id);
                 $rows = $category === true ? 1 : status500("Failed to delete $this->singular");
 
                 if($category):
                     try{
-                        $category = new CategoryValidator($categoryToDelete->category_id, $categoryToDelete->category_title);
+                        $category = new CategoryValidator($rowToDelete->category_id, $rowToDelete->category_title);
                         $array[] = $category->returnAsArray();
                         $array['data'] = $this->plural;
                         $array['message'] = "$this->singular deleted";

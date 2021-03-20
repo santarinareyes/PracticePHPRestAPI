@@ -43,7 +43,8 @@
         }
 
         public function getAllCategories(){
-            $this->db->query("SELECT * FROM categories");
+            $this->db->query("SELECT * FROM categories 
+                              GROUP BY category_id ASC");
             return $this->db->resultSet();
         }
 

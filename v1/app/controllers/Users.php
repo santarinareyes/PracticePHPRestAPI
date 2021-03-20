@@ -342,6 +342,37 @@
                     status404("$this->singular not found");
                 endif;
                 
+            } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
+                if($id === ""){
+                    status404("No $this->singular found to delete");
+                }
+
+                if(!is_numeric($id)){
+                    status400("$this->singular Id must be numeric");
+                }
+
+                $rowToDelete = $this->userModel->getSingleUser($id);
+                empty($rowToDelete) ? status404("$this->singular not found") : false;
+                $user = $this->userModel->deleteUser($id);
+                $rows = $user === true ? 1 : status500("Failed to delete $this->singular");
+
+                if($user):
+                    try{
+                        $user = new UserValidator($rowToDelete->user_id, $rowToDelete->firstname, $rowToDelete->lastname, $rowToDelete->username, $rowToDelete->email, $rowToDelete->role);
+                        $array[] = $user->returnAsArray();
+                        $array['data'] = $this->plural;
+                        $array['message'] = "$this->singular deleted";
+                        
+                        $returnData = returnData($rows, $array);
+                        status200($returnData, $array['data']);
+                        
+                    } catch(UserException $e){
+                        status500($e);
+                    } 
+                else:
+                    status404("$this->singular not found");
+                endif;
+
             } else {
                 status405("Request method not allowed");
             }
