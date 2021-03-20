@@ -56,7 +56,7 @@
                 $email = sanitizeEmail($jsonData->email);
                 $password = sanitizePassword($jsonData->password);
 
-                $checkUserExist = $this->userModel->getSingleUser($username, $email);
+                $checkUserExist = $this->userModel->checkUserExist($username, $email);
 
                 if(!empty($checkUserExist)){
                     $existArray = [];
@@ -104,6 +104,72 @@
 
                 } else {
                     status500("There was an issue creating a user account. Please try again.");
+                }
+
+            } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){
+                if($id == ""){
+                    $users = $this->userModel->getAllUsers();
+                    $rows = count($users);
+                    
+                    foreach($users as $user){
+                        $user = new UserValidator($user->user_id, $user->firstname, $user->lastname, $user->username, $user->email, $user->role);
+                        $array[] = $user->returnAsArray();
+                    }
+
+                    $array['data'] = "users";
+                    $returnData = returnData($rows, $array);
+                    status200($returnData, false, true);
+                }
+
+                if($id == "admin"){
+                    $users = $this->userModel->getRoleAdmin($id);
+                    $rows = count($users);
+                    
+                    foreach($users as $user){
+                        $user = new UserValidator($user->user_id, $user->firstname, $user->lastname, $user->username, $user->email, $user->role);
+                        $array[] = $user->returnAsArray();
+                    }
+
+                    $array['data'] = "users";
+                    $returnData = returnData($rows, $array);
+                    status200($returnData, false, true);
+                }
+
+                if($id == "user"){
+                    $users = $this->userModel->getRoleUser($id);
+                    $rows = count($users);
+                    
+                    foreach($users as $user){
+                        $user = new UserValidator($user->user_id, $user->firstname, $user->lastname, $user->username, $user->email, $user->role);
+                        $array[] = $user->returnAsArray();
+                    }
+
+                    $array['data'] = "users";
+                    $returnData = returnData($rows, $array);
+                    status200($returnData, false, true);
+                }
+
+                if(!is_numeric($id)){
+                    status400("Category ID must be numeric");
+                }
+
+                $singleUser = $this->userModel->getSingleUser($id);
+                $rows = count(array($singleUser));
+
+                if(!empty($singleUser)){
+                    try{
+                        $user = new UserValidator($singleUser->user_id, $singleUser->firstname, $singleUser->lastname, $singleUser->username, $singleUser->email, $singleUser->role);
+                        $array[] = $user->returnAsArray();
+                        $array['data'] = "users";
+                        
+                        $returnData = returnData($rows, $array);
+                        status200($returnData);
+                        
+                    } catch(UserException $e){
+                        status500($e);
+                    } 
+                } else {
+                    status404("User not found");
                 }
 
             } else {

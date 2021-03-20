@@ -12,7 +12,7 @@
             $this->db->connectReadDB();
         }
 
-        public function getSingleUser($username, $email){
+        public function checkUserExist($username, $email){
             $this->db->connectMasterDB();
             $this->db->query("SELECT username, email FROM users WHERE username = :username OR email = :email");
             $this->db->bind(":username", $username);
@@ -46,5 +46,28 @@
                 status500("Failed to retreive user after creation");
             }
             return $this->db->single();
+        }
+
+        public function getAllUsers(){
+            $this->db->query("SELECT * FROM users");
+            return $this->db->resultSet();
+        }
+
+        public function getSingleUser($id){
+            $this->db->query("SELECT * FROM users WHERE user_id = :id");
+            $this->db->bind(":id", $id);
+            return $this->db->single();
+        }
+
+        public function getRoleAdmin($admin){
+            $this->db->query("SELECT * FROM users WHERE role = :this");
+            $this->db->bind(":this", $admin);
+            return $this->db->resultSet();
+        }
+
+        public function getRoleUser($user){
+            $this->db->query("SELECT * FROM users WHERE role = :this");
+            $this->db->bind(":this", $user);
+            return $this->db->resultSet();
         }
     }
