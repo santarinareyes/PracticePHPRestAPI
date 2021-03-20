@@ -20,6 +20,10 @@
         $hasNextPage === true ? $returnData['has_next_page'] = true : $returnData['has_next_page'] = false;
         $hasPrevPage === true ? $returnData['hasPrevPage'] = false : $returnData['hasPrevPage'] = true;
 
-        $returnData['tasks'] = $array;
+        if(isset($array["data"])){
+            $returnData[$array["data"]] = $array;
+            unset($returnData[$array["data"]]["data"]);
+        }
+        
         return $returnData;
     }

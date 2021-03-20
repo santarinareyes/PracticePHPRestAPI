@@ -150,7 +150,7 @@
                 }
 
                 if(!is_numeric($id)){
-                    status400("Category ID must be numeric");
+                    status400("User ID must be numeric");
                 }
 
                 $singleUser = $this->userModel->getSingleUser($id);
@@ -171,6 +171,49 @@
                 } else {
                     status404("User not found");
                 }
+
+            } else {
+                status405("Request method not allowed");
+            }
+        }
+
+        public function page($currentPage = ""){
+            if($_SERVER['REQUEST_METHOD'] === 'GET'){
+                if($currentPage == "" || !is_numeric($currentPage)){
+                    status400("Page cannot be empty or must be numeric");
+                }
+
+                if($currentPage == 0){
+                    $currentPage = 1;
+                }
+
+                $limitPerPage = 20;
+                $numRows = intval($this->userModel->countAllUsers());
+                $numPages = ceil($numRows/$limitPerPage);
+
+                if($numPages == 0 || $numPages == ""){
+                    $numPages = 1;
+                }
+
+                if($currentPage > $numPages){
+                    status404("Page not found");
+                }
+
+                $offset = ($currentPage == 1 ? 0 : ($limitPerPage*($currentPage-1)));
+                $rows = $this->userModel->getUsersPagination($limitPerPage, $offset);
+                $pageRows = count($rows);
+
+                foreach($rows as $row){
+                    $row = new UserValidator($row->user_id, $row->firstname, $row->lastname, $row->username, $row->email, $row->role);
+                    $array[] = $row->returnAsArray();
+                    $array['data'] = "users";
+                }
+
+                $hasNextPage = $currentPage < $numPages;
+                $hasPrevPage = $currentPage == 1 ? true : $currentPage > $numPages;
+
+                $returnData = returnPageData($numRows, $pageRows, $numPages, $hasNextPage, $hasPrevPage, $array);
+                status200($returnData, true);
 
             } else {
                 status405("Request method not allowed");

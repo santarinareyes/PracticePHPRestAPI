@@ -208,11 +208,15 @@
                     status400("Page cannot be empty or must be numeric");
                 }
 
+                if($currentPage == 0){
+                    $currentPage = 1;
+                }
+
                 $limitPerPage = 20;
                 $numRows = intval($this->categoryModel->countAllCategories());
                 $numPages = ceil($numRows/$limitPerPage);
 
-                if($currentPage == 0 || $currentPage == "" || $numPages == 0 || $numPages == ""){
+                if($numPages == 0 || $numPages == ""){
                     $numPages = 1;
                 }
 
@@ -221,17 +225,18 @@
                 }
 
                 $offset = ($currentPage == 1 ? 0 : ($limitPerPage*($currentPage-1)));
-                $categories = $this->categoryModel->getCategoriesPagination($limitPerPage, $offset);
-                $pageRows = count($categories);
+                $rows = $this->categoryModel->getCategoriesPagination($limitPerPage, $offset);
+                $pageRows = count($rows);
 
-                foreach($categories as $category){
-                    $category = new CategoryValidator($category->category_id, $category->category_title);
-                    $array[] = $category->returnAsArray();
+                foreach($rows as $row){
+                    $row = new CategoryValidator($row->category_id, $row->category_title);
+                    $array[] = $row->returnAsArray();
+                    $array['data'] = "categories";
                 }
 
-                $hasNextPage = ($currentPage < $numPages);
-                $hasPrevPage = ($currentPage > $numPages);
-                
+                $hasNextPage = $currentPage < $numPages;
+                $hasPrevPage = $currentPage == 1 ? true : $currentPage > $numPages;
+
                 $returnData = returnPageData($numRows, $pageRows, $numPages, $hasNextPage, $hasPrevPage, $array);
                 status200($returnData, true);
 

@@ -70,4 +70,18 @@
             $this->db->bind(":this", $user);
             return $this->db->resultSet();
         }
+
+        public function countAllUsers(){
+            $this->db->query("SELECT count(*) FROM users");
+            return $this->db->fetchColumn();
+        }
+
+        public function getUsersPagination($limitPerPage, $offset){
+            $this->db->query("SELECT * FROM users 
+                              ORDER BY user_id ASC
+                              LIMIT :limit OFFSET :offset");
+            $this->db->bind(":limit", $limitPerPage);
+            $this->db->bind(":offset", $offset);
+            return $this->db->resultSet();
+        }
     }
