@@ -21,7 +21,7 @@
         }
 
         public function createCategory($title){
-            $this->db->connectMasterDB();
+            $this->db::connectMasterDB();
             $this->db->query("INSERT INTO categories (category_title) 
                               VALUES (:title)");
             $this->db->bind(":title", $title);
@@ -37,7 +37,7 @@
 
             $rowCount = $this->db->rowCount();
             if($rowCount === 0){
-                status500("Failed to retreive task after creation");
+                status500("Failed to retreive category after creation");
             }
             return $this->db->single();
         }
@@ -62,7 +62,7 @@
         }
 
         public function updateCategory($data){
-            $this->db->connectMasterDB();
+            $this->db::connectMasterDB();
             $this->db->query("UPDATE categories SET category_title = :title 
                               WHERE category_id = :id");
             $this->db->bind(":id", $data["id"]);
@@ -71,7 +71,7 @@
         }
 
         public function getUpdatedCategory($id){
-            $this->db->connectMasterDB();
+            $this->db::connectMasterDB();
             $this->db->query("SELECT * FROM categories WHERE category_id = :id");
             $this->db->bind(":id", $id);
             return $this->db->single();

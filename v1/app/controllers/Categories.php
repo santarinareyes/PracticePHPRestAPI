@@ -41,34 +41,23 @@
                     $latestInfo = $this->categoryModel->getLastCreatedCategory();
                     $rows = count(array($latestInfo));
                         
-                        if(!empty($latestInfo)){
-                            try{
-                                $category = new CategoryValidator($latestInfo->category_id, $latestInfo->category_title);
-                                $array[] = $category->returnAsArray();
-                                $array['data'] = "categories";
-                                $array['message'] = "Category created";
-                                
-                                $returnData = returnData($rows, $array);
-                                status200($returnData, $array['data']);
-                                
-                            } catch(CategoryException $e){
-                                status500($e);
-                            } 
-                        } else {
-                            status404("Category not found");
-                        }
+                    if($latestInfo){
+                        try{
+                            $category = new CategoryValidator($latestInfo->category_id, $latestInfo->category_title);
+                            $array[] = $category->returnAsArray();
+                            $array['data'] = "categories";
+                            $array['message'] = "Category created";
+                            
+                            $returnData = returnData($rows, $array);
+                            status200($returnData, $array['data']);
+                            
+                        } catch(CategoryException $e){
+                            status500($e);
+                        } 
 
-                    $newData = [
-                        "data" => "categories",
-                        "message" => "Category created",
-                        "title" => ucwords(strtolower($title))
-                    ];
-
-                        $returnData = returnData("", $newData);
-                        status201($returnData, $newData["data"]);
-
-                } else {
-                    status500("There was an issue creating a new category. Please try again.");
+                    } else {
+                        status500("There was an issue creating a new category. Please try again.");
+                    }
                 }
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){

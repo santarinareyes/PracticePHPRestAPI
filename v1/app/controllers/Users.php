@@ -20,7 +20,6 @@
                 if(!isset($jsonData->firstname) || !isset($jsonData->lastname) || !isset($jsonData->username) || !isset($jsonData->email) || !isset($jsonData->password)){
 
                     $error_message = [];
-
                     !isset($jsonData->firstname) ? array_push($error_message, "Firstname cannot be empty") : false;
                     !isset($jsonData->lastname) ? array_push($error_message, "Lastname cannot be empty") : false;
                     !isset($jsonData->username) ? array_push($error_message, "Username cannot be empty") : false;
@@ -30,10 +29,10 @@
                     status400($error_message);
                 }
 
-                if(strlen($jsonData->firstname) < 1 || strlen($jsonData->firstname) > 255 || strlen($jsonData->lastname) < 1 || strlen($jsonData->lastname) > 255 || strlen($jsonData->username) < 1 || strlen($jsonData->username) > 255 || !filter_var($jsonData->email, FILTER_VALIDATE_EMAIL) || strlen($jsonData->email) < 1 || strlen($jsonData->email) > 255 || strlen($jsonData->password) < 1 || strlen($jsonData->password) > 255){
+                if((isset($jsonData->role) && sanitizeString($jsonData->role) != 'Admin') || strlen($jsonData->firstname) < 1 || strlen($jsonData->firstname) > 255 || strlen($jsonData->lastname) < 1 || strlen($jsonData->lastname) > 255 || strlen($jsonData->username) < 1 || strlen($jsonData->username) > 255 || !filter_var($jsonData->email, FILTER_VALIDATE_EMAIL) || strlen($jsonData->email) < 1 || strlen($jsonData->email) > 255 || strlen($jsonData->password) < 1 || strlen($jsonData->password) > 255){
 
                     $error_message = [];
-
+                    $jsonData->role != 'admin' ? array_push($error_message, "Set role to 'admin' or remove the role row to set to user") : false;
                     strlen($jsonData->firstname) < 1 ? array_push($error_message, "Firstname cannot be blank") : false;
                     strlen($jsonData->firstname) > 255 ? array_push($error_message, "Firstname cannot be greater than 255 characters (Your input: ".strlen($jsonData->firstname)." characters)") : false;
                     strlen($jsonData->lastname) < 1 ? array_push($error_message, "Lastname cannot be blank") : false;
@@ -80,24 +79,28 @@
                     "lastname" => ucwords(strtolower($lastname)),
                     "username" => $username,
                     "email" => $email,
-                    "password" => $hashed_password
+                    "password" => $hashed_password,
+                    "role" => isset($jsonData->role) ? sanitizeString($jsonData->role) : "User"
                 ];
 
                 $newUser = $this->userModel->createUser($data);
 
                 if($newUser){
+                    $latestInfo = $this->userModel->getLastCreatedUser();
+                    $rows = count(array($latestInfo));
 
-                    $newData = [
-                        "data" => "users",
-                        "message" => "User created",
-                        "firstname" => ucwords(strtolower($firstname)),
-                        "lastname" => ucwords(strtolower($lastname)),
-                        "username" => $username,
-                        "email" => $email
-                    ];
-
-                        $returnData = returnData("", $newData);
-                        status201($returnData, $newData["data"]);
+                    try{
+                        $user = new UserValidator($latestInfo->user_id, $latestInfo->firstname, $latestInfo->lastname, $latestInfo->username, $latestInfo->email, $latestInfo->role);
+                        $array[] = $user->returnAsArray();
+                        $array['data'] = "users";
+                        $array['message'] = "User created";
+                        
+                        $returnData = returnData($rows, $array);
+                        status200($returnData, $array['data']);
+                        
+                    } catch(UserException $e){
+                        status500($e);
+                    } 
 
                 } else {
                     status500("There was an issue creating a user account. Please try again.");
