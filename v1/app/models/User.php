@@ -13,7 +13,6 @@
         }
 
         public function checkUserExist($username, $email){
-            $this->db->connectMasterDB();
             $this->db->query("SELECT username, email FROM users WHERE username = :username OR email = :email");
             $this->db->bind(":username", $username);
             $this->db->bind(":email", $email);
@@ -118,7 +117,7 @@
 
             $rowCount = $this->db->rowCount();
             if($rowCount === 0){
-                status500("Failed to update task");
+                status500("Failed to update user");
             }
         }
 
@@ -130,6 +129,7 @@
         }
 
         public function deleteUser($id){
+            $this->db->connectMasterDB();
             $this->db->query("DELETE FROM users WHERE user_id = :id");
             $this->db->bind(":id", $id);
             return trueOrFalse($this->db->execute());

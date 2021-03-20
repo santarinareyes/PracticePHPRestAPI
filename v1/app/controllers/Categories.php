@@ -5,7 +5,7 @@
 
         public function __construct()
         {
-            $this->categoryModel = $this->model('Category');
+            $this->categoryModel = $this->model($this->singular);
         }
 
         public function index($id = ""){
@@ -35,7 +35,7 @@
 
                 $title = sanitizeString($jsonData->title);
                 $checkCategoryExist = $this->categoryModel->checkCategoryExist($title);
-                !empty($checkCategoryExist) ? status409("Category title already exist") : false;
+                !empty($checkCategoryExist) ? status409("$this->singular title already exist") : false;
 
                 $title = ucwords(strtolower($title));
                 $newCategory = $this->categoryModel->createCategory($title);
@@ -52,7 +52,7 @@
                             $array['message'] = "$this->singular created";
                             
                             $returnData = returnData($rows, $array);
-                            status200($returnData, $array['data']);
+                            status201($returnData, $array['data']);
                             
                         } catch(CategoryException $e){
                             status500($e);

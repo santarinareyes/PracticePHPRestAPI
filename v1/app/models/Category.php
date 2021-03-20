@@ -79,6 +79,7 @@
         }
 
         public function deleteCategory($id){
+            $this->db->connectMasterDB();
             $this->db->query("DELETE FROM categories WHERE category_id = :id");
             $this->db->bind(":id", $id);
             return trueOrFalse($this->db->execute());

@@ -5,7 +5,7 @@
 
         public function __construct()
         {
-            $this->userModel = $this->model('User');
+            $this->userModel = $this->model($this->singular);
         }
 
         public function index($id = ""){
@@ -99,7 +99,7 @@
                         $array['message'] = "$this->singular created";
                         
                         $returnData = returnData($rows, $array);
-                        status200($returnData, $array['data']);
+                        status201($returnData, $array['data']);
                         
                     } catch(UserException $e){
                         status500($e);
