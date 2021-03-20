@@ -32,12 +32,6 @@
                     status400($error_message);
                 }
 
-                if(isset($jsonData->category)){
-                    $checkCategoryExist = $this->categoryModel->checkCategoryExist(sanitizeString($jsonData->category));
-                    empty($checkCategoryExist) ? status404("Category does not exist. Please try again.") : false;
-                    $categoryId = $checkCategoryExist->category_id;
-                }
-
                 if(strlen($jsonData->title) < 1 || strlen($jsonData->title) > 255 || strlen($jsonData->category) < 1 || strlen($jsonData->category) > 255 || !is_numeric($jsonData->price) || strlen($jsonData->description) < 1){
 
                     $error_message = [];
@@ -50,6 +44,12 @@
                     strlen($jsonData->description) < 1 ? array_push($error_message, "Description cannot be blank") : false;
 
                     status400($error_message);
+                }
+
+                if(isset($jsonData->category)){
+                    $checkCategoryExist = $this->categoryModel->checkCategoryExist(sanitizeString($jsonData->category));
+                    empty($checkCategoryExist) ? status404("Category does not exist. Please try again.") : false;
+                    $categoryId = $checkCategoryExist->category_id;
                 }
 
                 $title = sanitizeString($jsonData->title);
@@ -250,7 +250,7 @@
                 
             } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
                 if($id === ""){
-                    status404("No $this->singular found to delete");
+                    status404("$this->singular Id cannot be empty");
                 }
 
                 if(!is_numeric($id)){
