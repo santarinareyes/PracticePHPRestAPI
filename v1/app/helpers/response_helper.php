@@ -74,6 +74,15 @@
         $response->send();
         exit;
     }
+
+    function status401($message){
+        $response = new Response;
+        $response->setHttpStatusCode(401);
+        $response->setSuccess(false);
+        $response->addMessage([$message]);
+        $response->send();
+        exit;
+    }
     
     function status404($message){
         $response = new Response;

@@ -13,7 +13,10 @@
         }
 
         public function checkUserExist($username, $email){
-            $this->db->query("SELECT username, email FROM users WHERE username = :username OR email = :email");
+            $this->db->connectMasterDB();
+            $this->db->query("SELECT username, email, firstname, lastname, password, 
+                              role, isactive, user_id, loginattempts 
+                              FROM users WHERE username = :username OR email = :email");
             $this->db->bind(":username", $username);
             $this->db->bind(":email", $email);
             return $this->db->single();
@@ -36,7 +39,8 @@
         public function getLastCreatedUser(){
             $this->db::connectMasterDB();
             $lastInsertId = $this->db->lastInsertId();
-            $this->db->query("SELECT * FROM users WHERE user_id = :id");
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                              FROM users WHERE user_id = :id");
             $this->db->bind(":id", $lastInsertId);
             $this->db->execute();
 
@@ -48,24 +52,28 @@
         }
 
         public function getAllUsers(){
-            $this->db->query("SELECT * FROM users");
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                              FROM users");
             return $this->db->resultSet();
         }
 
         public function getSingleUser($id){
-            $this->db->query("SELECT * FROM users WHERE user_id = :id");
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                              FROM users WHERE user_id = :id");
             $this->db->bind(":id", $id);
             return $this->db->single();
         }
 
         public function getRoleAdmin($admin){
-            $this->db->query("SELECT * FROM users WHERE role = :this");
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                              FROM users WHERE role = :this");
             $this->db->bind(":this", $admin);
             return $this->db->resultSet();
         }
 
         public function getRoleUser($user){
-            $this->db->query("SELECT * FROM users WHERE role = :this");
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                                     FROM users WHERE role = :this");
             $this->db->bind(":this", $user);
             return $this->db->resultSet();
         }
@@ -109,7 +117,8 @@
 
         public function getUpdatedUser($id){
             $this->db->connectMasterDB();
-            $this->db->query("SELECT * FROM users WHERE user_id = :id");
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                              FROM users WHERE user_id = :id");
             $this->db->bind(":id", $id);
             return $this->db->single();
         }
@@ -127,7 +136,8 @@
         }
 
         public function getUsersPagination($limitPerPage, $offset){
-            $this->db->query("SELECT * FROM users 
+            $this->db->query("SELECT username, email, firstname, lastname, role, isactive , user_id 
+                              FROM users 
                               ORDER BY user_id ASC
                               LIMIT :limit OFFSET :offset");
             $this->db->bind(":limit", $limitPerPage);
