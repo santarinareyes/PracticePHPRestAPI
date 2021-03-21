@@ -98,6 +98,76 @@
                     $returnData = returnData($rows, $array);
                     status201($returnData);
                 }
+            } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){
+                if($id == ""){
+                    $sessions = $this->sessionModel->getAllSessions();
+                    $rows = count($sessions);
+                    $array = [];
+                    
+                    foreach($sessions as $session){
+                        $new = [];
+                        $new["session_id"] = $session->session_id;
+                        $new["username"] = $session->username;
+                        $new["isactive"] = $session->isactive;
+                        array_push($array, $new);
+                    }
+
+                    $array['data'] = $this->plural;
+                    $returnData = returnData($rows, $array);
+                    status200($returnData, false, true);
+
+                }
+
+                if(!is_numeric($id)){
+                    $sessions = $this->sessionModel->checkUsernameSessions($id);
+                    empty($sessions) ? status400("Username does not exist. Please try again.") : false;
+                    
+                    if($sessions !== 0){
+                        $rows = count($sessions);
+                        $array = [];
+                    
+                        foreach($sessions as $session){
+                            $new = [];
+                            $new["session_id"] = $session->session_id;
+                            $new["user_id"] = $session->session_user_id;
+                            $new["username"] = $session->username;
+                            array_push($array, $new);
+                        }
+
+                        $array['data'] = $this->plural;
+                        $returnData = returnData($rows, $array);
+                        status200($returnData, false, true);
+
+                    } else {
+                        status404("This user does not have an existing session");
+                    }
+                }
+
+                if(is_numeric($id)){
+                    $sessions = $this->sessionModel->checkUserIdSessions($id);
+                    empty($sessions) ? status400("User Id does not exist. Please try again.") : false;
+                    
+                    if($sessions !== 0){
+                        $rows = count($sessions);
+                        $array = [];
+                    
+                        foreach($sessions as $session){
+                            $new = [];
+                            $new["session_id"] = $session->session_id;
+                            $new["user_id"] = $session->session_user_id;
+                            $new["username"] = $session->username;
+                            array_push($array, $new);
+                        }
+
+                        $array['data'] = $this->plural;
+                        $returnData = returnData($rows, $array);
+                        status200($returnData, false, true);
+
+                    } else {
+                        status404("This user Id does not have an existing session");
+                    }
+                }
+
             } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH'){
                 if($id === "" || !is_numeric($id)){
                     $error_array = [];
@@ -222,6 +292,54 @@
                     $returnData = returnData($rows, $array);
                     status200($returnData, $array["data"]);
                 }
+            } else {
+                status405("Request method not allowed");
+            }
+        }
+
+        public function page($currentPage = ""){
+            if($_SERVER['REQUEST_METHOD'] === 'GET'){
+                if($currentPage == "" || !is_numeric($currentPage)){
+                    status400("Page cannot be empty or must be numeric");
+                }
+
+                if($currentPage == 0){
+                    $currentPage = 1;
+                }
+
+                $limitPerPage = 5;
+                $numRows = intval($this->sessionModel->countAllSessions());
+                $numPages = ceil($numRows/$limitPerPage);
+
+                if($numPages == 0 || $numPages == ""){
+                    $numPages = 1;
+                }
+
+                if($currentPage > $numPages){
+                    status404("Page not found");
+                }
+
+                $offset = ($currentPage == 1 ? 0 : ($limitPerPage*($currentPage-1)));
+                $rows = $this->sessionModel->getSessionsPagination($limitPerPage, $offset);
+                $pageRows = count($rows);
+
+                $array = [];
+                $array['data'] = $this->plural;
+                    
+                foreach($rows as $row){
+                    $new = [];
+                    $new["session_id"] = $row->session_id;
+                    $new["user_id"] = $row->session_user_id;
+                    $new["username"] = $row->username;
+                    array_push($array, $new);
+                }
+
+                $hasNextPage = $currentPage < $numPages;
+                $hasPrevPage = $currentPage == 1 ? true : $currentPage > $numPages;
+
+                $returnData = returnPageData($numRows, $pageRows, $numPages, $hasNextPage, $hasPrevPage, $array);
+                status200($returnData, true);
+
             } else {
                 status405("Request method not allowed");
             }

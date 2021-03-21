@@ -80,4 +80,41 @@
             $this->db->bind(":oldRefreshtoken", $data["oldRefreshtoken"]);
             return trueOrFalse($this->db->execute("There was an issue trying to update session"));
         }
+
+        public function getAllSessions(){
+            $this->db->query("SELECT s.session_id, u.username, u.isactive FROM sessions s 
+                              INNER JOIN users u ON s.session_user_id = u.user_id");
+            return $this->db->resultSet("There was an issue fetching sessions");
+        }
+
+        public function checkUsernameSessions($username){
+            $this->db->query("SELECT s.session_id, s.session_user_id, u.username FROM sessions s 
+                              INNER JOIN users u on s.session_user_id = u.user_id
+                              WHERE username = :username");
+            $this->db->bind(":username", $username);
+            return $this->db->resultSet("There was an issue trying to check user");
+        }
+
+        public function checkUserIdSessions($id){
+            $this->db->query("SELECT s.session_id, s.session_user_id, u.username FROM sessions s 
+                              INNER JOIN users u on s.session_user_id = u.user_id
+                              WHERE session_user_id = :id");
+            $this->db->bind(":id", $id);
+            return $this->db->resultSet("There was an issue trying to check user");
+        }
+
+        public function countAllSessions(){
+            $this->db->query("SELECT count(*) FROM sessions");
+            return $this->db->fetchColumn("There was an issue counting sessions");
+        }
+
+        public function getSessionsPagination($limitPerPage, $offset){
+            $this->db->query("SELECT s.session_id, s.session_user_id, u.username FROM sessions s 
+                              INNER JOIN users u on s.session_user_id = u.user_id
+                              ORDER BY session_id ASC
+                              LIMIT :limit OFFSET :offset");
+            $this->db->bind(":limit", $limitPerPage);
+            $this->db->bind(":offset", $offset);
+            return $this->db->resultSet("There was an issue trying to fetch sessions");
+        }
     }
