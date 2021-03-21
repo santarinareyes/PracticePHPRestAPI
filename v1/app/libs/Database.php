@@ -56,13 +56,7 @@
         }
 
         public function query($sql){
-            try{
-                $this->stm = self::$dbh->prepare($sql);
-
-            } catch(PDOException $e) {
-                self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
-            }
+            $this->stm = self::$dbh->prepare($sql);
         }
 
         public function bind($param, $value, $type = null){
@@ -85,66 +79,36 @@
             $this->stm->bindValue($param, $value, $type);
         }
 
-        public function execute(){
+        public function execute($message){
             try{
                 return $this->stm->execute();
 
             } catch(PDOException $e) {
                 self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
+                PDOException(self::$error, $message);
             }
         }
 
-        public function resultSet(){
-            try{
-                $this->execute();
-                return $this->stm->fetchAll(PDO::FETCH_OBJ);
-
-            } catch(PDOException $e) {
-                self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
-            }
+        public function resultSet($message){
+            $this->execute($message);
+            return $this->stm->fetchAll(PDO::FETCH_OBJ);
         }
 
-        public function single(){
-            try{
-                $this->execute();
-                return $this->stm->fetch(PDO::FETCH_OBJ);
-
-            } catch(PDOException $e) {
-                self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
-            }
+        public function single($message){
+            $this->execute($message);
+            return $this->stm->fetch(PDO::FETCH_OBJ);
         }
 
         public function rowCount(){
-            try{
-                return $this->stm->rowCount();
-
-            } catch(PDOException $e) {
-                self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
-            }
+            return $this->stm->rowCount();
         }
 
-        public function fetchColumn(){
-            try{
-                $this->execute();
-                return $this->stm->fetchColumn();
-                
-            } catch(PDOException $e) {
-                self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
-            }
+        public function fetchColumn($message){
+            $this->execute($message);
+            return $this->stm->fetchColumn();
         }
 
         public function lastInsertId(){
-            try{
-                return self::$dbh->lastInsertId();
-                
-            } catch(PDOException $e) {
-                self::$error = $e->getMessage();
-                PDOException(self::$error, "Database query error");
-            }
+            return self::$dbh->lastInsertId();
         }
     }

@@ -63,6 +63,17 @@
                     $this->sessionModel->updateLoginAttempts($user_id);
                     status401("Username or password is incorrect");
                 }
+
+                /*
+                 * Convert binary bytes to hexadecimal then converts it 
+                 * to readable and valid characters
+                 */
+                $accessToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
+                $refreshToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
+
+                $accesstoken_expiry = 1800; // expire after 30 minutes
+                $refreshtoken_expiry = 2592000; // expire after 30 days
+
             } else {
                 status405("Request method not allowed");
             }

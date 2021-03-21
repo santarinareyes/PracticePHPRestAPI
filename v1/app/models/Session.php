@@ -12,6 +12,6 @@
             $this->db->query("UPDATE users SET loginattempts = loginattempts+1 
                               WHERE user_id = :id");
             $this->db->bind(":id", $id);
-            $this->db->execute();
+            $this->db->execute("Username or password is incorrect");
         }
     }
