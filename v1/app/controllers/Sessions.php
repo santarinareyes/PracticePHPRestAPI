@@ -49,18 +49,16 @@
 
                 $user_id = $checkUserExist->user_id;
                 $username = $checkUserExist->username;
-                $firstname = $checkUserExist->firstname;
-                $lastname = $checkUserExist->lastname;
                 $email = $checkUserExist->email;
                 $password = $checkUserExist->password;
                 $isactive = $checkUserExist->isactive;
                 $loginattempts = $checkUserExist->loginattempts;
 
-                $isactive !== "Y" ? status401("User account is locked") : false;
+                $isactive !== "Y" ? status401("User account is not active") : false;
                 $loginattempts >= 3 ? status401("User account has been locked") : false;
 
                 if(!password_verify($inputPassword, $password)){
-                    $this->sessionModel->updateLoginAttempts($user_id);
+                    $this->sessionModel->updateLoginAttemptsOnFail($user_id);
                     status401("Username or password is incorrect");
                 }
 
@@ -68,12 +66,162 @@
                  * Convert binary bytes to hexadecimal then converts it 
                  * to readable and valid characters
                  */
-                $accessToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
-                $refreshToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
-
+                $accesstoken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
+                $refreshtoken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
+                
                 $accesstoken_expiry = 1800; // expire after 30 minutes
                 $refreshtoken_expiry = 2592000; // expire after 30 days
+                
+                $data = [
+                    "user_id" => $user_id,
+                    "accesstoken" => $accesstoken,
+                    "refreshtoken" => $refreshtoken,
+                    "accesstoken_expiry" => $accesstoken_expiry,
+                    "refreshtoken_expiry" => $refreshtoken_expiry,
+                ];
 
+                $success = $this->sessionModel->resetLoginAttemptsOnSuccess($data);
+                $rows = count(array($success));
+                
+                if($success){
+                    $array = [
+                        "data" => $this->plural,
+                        "session_id" => $success,
+                        "username" => $username,
+                        "email" => $email,
+                        "accesstoken" => $accesstoken,
+                        "accesstoken_expiry" => ($accesstoken_expiry/60)." min",
+                        "refreshtoken" => $refreshtoken,
+                        "refreshtoken_expiry" => ($refreshtoken_expiry/86400)." days"
+                    ];
+
+                    $returnData = returnData($rows, $array);
+                    status201($returnData);
+                }
+            } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH'){
+                if($id === "" || !is_numeric($id)){
+                    $error_array = [];
+                    $id === "" ? array_push($error_array, "$this->singular Id cannot be empty") : false;
+                    !is_numeric($id) ? array_push($error_array, "$this->singular Id must me numeric") : false;
+                    status400($error_array);
+                }
+
+                if(!isset($_SERVER['HTTP_AUTHORIZATION']) || strlen($_SERVER['HTTP_AUTHORIZATION']) < 1){
+                    $error_array = [];
+                    !isset($_SERVER['HTTP_AUTHORIZATION']) ? array_push($error_array, "$this->singular Access token is missing from the header") : false;
+                    isset($_SERVER['HTTP_AUTHORIZATION']) && strlen($_SERVER['HTTP_AUTHORIZATION']) < 1 ? array_push($error_array, "$this->singular Access token cannot be blank") : false;
+                    status401($error_array);
+                }
+                
+                if($_SERVER['CONTENT_TYPE'] !== 'application/json'){
+                    status400("Content type header is not set to JSON");
+                }
+
+                $inputData = file_get_contents('php://input');
+
+                if(!$jsonData = json_decode($inputData)){
+                    status400("Request body is not valid JSON");
+                }
+
+                if(!isset($jsonData->refreshtoken) || strlen($jsonData->refreshtoken) < 1){
+
+                    $error_message = [];
+                    !isset($jsonData->refreshtoken) ? array_push($error_message, "Refresh token cannot be empty") : false;
+                    strlen($jsonData->refreshtoken) < 1 ? array_push($error_message, "Refresh token cannot be blank") : false;
+                    
+                    status400($error_message);
+                }
+
+                $accesstoken = $_SERVER['HTTP_AUTHORIZATION'];
+                $refreshtoken = $jsonData->refreshtoken;
+
+                $getUserSession = $this->sessionModel->getUserSession($id, $accesstoken, $refreshtoken);
+                empty($getUserSession) ? status401("Access token or refresh token is incorrect for session id") : false;
+
+                $session_id = $getUserSession->session_id;
+                $user_id = $getUserSession->user_id;
+                $username = $getUserSession->username;
+                $isactive = $getUserSession->isactive;
+                $loginattempts = $getUserSession->loginattempts;
+                $accesstoken_expiry = $getUserSession->accesstoken_expiry;
+                $refreshtoken_expiry = $getUserSession->refreshtoken_expiry;
+
+                $isactive !== "Y" ? status401("User account is not active") : false;
+                $loginattempts >= 3 ? status401("User account has been locked") : false;
+                strtotime($refreshtoken_expiry) < time() ? status401("Refresh token has expired, please log in again") : false;
+
+                /*
+                 * Convert binary bytes to hexadecimal then converts it 
+                 * to readable and valid characters
+                 */
+                $newAccesstoken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
+                $newRefreshtoken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
+                
+                $newAccesstoken_expiry = 1800; // expire after 30 minutes
+                $newRefreshtoken_expiry = 2592000; // expire after 30 days
+                
+                $data = [
+                    "session_id" => $session_id,
+                    "user_id" => $user_id,
+                    "username" => $username,
+                    "oldAccesstoken" => $accesstoken,
+                    "oldRefreshtoken" => $refreshtoken,
+                    "newAccesstoken" => $newAccesstoken,
+                    "newRefreshtoken" => $newRefreshtoken,
+                    "accesstoken_expiry" => $newAccesstoken_expiry,
+                    "refreshtoken_expiry" => $newRefreshtoken_expiry,
+                ];
+
+                $success = $this->sessionModel->updateUserSession($data);
+                $rows = $success === true ? 1 : status401("Access token could not be refreshed, please log in again");
+                
+                if($success){
+                    $array = [
+                        "data" => $this->plural,
+                        "message" => "Token refreshed",
+                        "session_id" => $session_id,
+                        "username" => $username,
+                        "accesstoken" => $newAccesstoken,
+                        "accesstoken_expiry" => ($newAccesstoken_expiry/60)." min",
+                        "refreshtoken" => $newRefreshtoken,
+                        "refreshtoken_expiry" => ($newRefreshtoken_expiry/86400)." days"
+                    ];
+
+                    $returnData = returnData($rows, $array);
+                    status201($returnData, $array["data"]);
+                }
+                
+            } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
+                if($id === "" || !is_numeric($id)){
+                    $error_array = [];
+                    $id === "" ? array_push($error_array, "$this->singular Id cannot be empty") : false;
+                    !is_numeric($id) ? array_push($error_array, "$this->singular Id must me numeric") : false;
+                    status400($error_array);
+                }
+
+                if(!isset($_SERVER['HTTP_AUTHORIZATION']) || strlen($_SERVER['HTTP_AUTHORIZATION']) < 1){
+                    $error_array = [];
+                    !isset($_SERVER['HTTP_AUTHORIZATION']) ? array_push($error_array, "$this->singular Access token is missing from the header") : false;
+                    isset($_SERVER['HTTP_AUTHORIZATION']) && strlen($_SERVER['HTTP_AUTHORIZATION']) < 1 ? array_push($error_array, "$this->singular Access token cannot be blank") : false;
+                    status401($error_array);
+                }
+
+                $accesstoken = $_SERVER['HTTP_AUTHORIZATION'];
+
+                $success = $this->sessionModel->checkAccessToken($accesstoken, $id);
+                $success === 0 ? status400("Failed to log out of this session using access token") : false;
+                $rows = count(array($success));
+
+                if($success !== 0){
+                    $array = [
+                        "data" => $this->plural,
+                        "message" => "Successfully logged out",
+                        "session_id" => $id,
+                    ];
+
+                    $returnData = returnData($rows, $array);
+                    status200($returnData, $array["data"]);
+                }
             } else {
                 status405("Request method not allowed");
             }

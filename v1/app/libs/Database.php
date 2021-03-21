@@ -79,12 +79,13 @@
             $this->stm->bindValue($param, $value, $type);
         }
 
-        public function execute($message){
+        public function execute($message, $rollback = false){
             try{
                 return $this->stm->execute();
 
             } catch(PDOException $e) {
                 self::$error = $e->getMessage();
+                $rollback === true ? self::$dbh->rollBack() : false;
                 PDOException(self::$error, $message);
             }
         }
@@ -110,5 +111,17 @@
 
         public function lastInsertId(){
             return self::$dbh->lastInsertId();
+        }
+
+        public function beginTransaction(){
+            return self::$dbh->beginTransaction();
+        }
+
+        public function rollBack(){
+            return self::$dbh->rollBack();
+        }
+
+        public function commit(){
+            return self::$dbh->commit();
         }
     }

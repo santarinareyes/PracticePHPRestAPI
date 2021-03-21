@@ -1,3 +1,6 @@
+php_flag display_errors on
+SetEnvIf Authorization .+ HTTP_AUTHORIZATION=$0
+
 <IfModule mod_rewrite.c>
     Options -Multiviews
     RewriteEngine On
