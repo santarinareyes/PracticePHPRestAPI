@@ -56,10 +56,13 @@
             return $this->db->single("There was an issue fetching the added product info");
         }
 
-        public function getAllCartItems(){
+        public function getAllCartItems($loggedInUserRole, $loggedInUserId){
+            $AdminOrUser = "";
+            $loggedInUserRole == 'User' ? $AdminOrUser = "WHERE user_id = ".$loggedInUserId : "";
             $this->db->query("SELECT c.cart_id, u.username, p.product_title FROM carts c 
                               INNER JOIN users u ON c.cart_user_id = u.user_id 
                               INNER JOIN products p ON c.cart_product_id = p.product_id 
+                              $AdminOrUser
                               GROUP BY cart_id ASC");
             return $this->db->resultSet("There was an issue fetching all cart items");
         }

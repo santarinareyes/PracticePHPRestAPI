@@ -55,7 +55,7 @@
                 $loginattempts = $checkUserExist->loginattempts;
 
                 $isactive !== "Y" ? status401("User account is not active") : false;
-                $loginattempts >= 3 ? status401("User account has been locked") : false;
+                $loginattempts >= 3 ? status401("User account is locked") : false;
 
                 if(!password_verify($inputPassword, $password)){
                     $this->sessionModel->updateLoginAttemptsOnFail($user_id);
@@ -197,7 +197,7 @@
 
                     $error_message = [];
                     !isset($jsonData->refreshtoken) ? array_push($error_message, "Refresh token cannot be empty") : false;
-                    strlen($jsonData->refreshtoken) < 1 ? array_push($error_message, "Refresh token cannot be blank") : false;
+                    isset($jsonData->refreshtoken) && empty($jsonData->refreshtoken) ? array_push($error_message, "Refresh token cannot be blank") : false;
                     
                     status400($error_message);
                 }
@@ -217,7 +217,7 @@
                 $refreshtoken_expiry = $getUserSession->refreshtoken_expiry;
 
                 $isactive !== "Y" ? status401("User account is not active") : false;
-                $loginattempts >= 3 ? status401("User account has been locked") : false;
+                $loginattempts >= 3 ? status401("User account is locked") : false;
                 strtotime($refreshtoken_expiry) < time() ? status401("Refresh token has expired, please log in again") : false;
 
                 /*

@@ -117,4 +117,13 @@
             $this->db->bind(":offset", $offset);
             return $this->db->resultSet("There was an issue trying to fetch sessions");
         }
+
+        public function checkSessionToken($accesstoken){
+            $this->db->query("SELECT s.session_user_id, u.role, s.accesstoken_expiry, 
+                              u.isactive, u.loginattempts FROM sessions s
+                              INNER JOIN users u ON s.session_user_id = u.user_id 
+                              WHERE s.accesstoken = :accesstoken");
+            $this->db->bind(":accesstoken", $accesstoken);
+            return $this->db->single("There was an error trying to check the session token");
+        }
     }

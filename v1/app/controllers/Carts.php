@@ -2,9 +2,33 @@
     class Carts extends BaseController {
         private $singular = "Cart";
         private $plural = "carts";
+        private $_userId = "";
+        private $_userRole = "";
 
         public function __construct()
         {
+            if(isLoggedIn(isset($_SERVER['HTTP_AUTHORIZATION']))){
+                $this->sessionModel = $this->model('Session');
+                $checkSessionToken = $this->sessionModel->checkSessionToken($_SERVER['HTTP_AUTHORIZATION']);
+                empty($checkSessionToken) ? status401("Invalid Access Token") : false ;
+
+                
+                if(count(array($checkSessionToken)) > 0){
+                    
+                    $array = [];
+                    $checkSessionToken->isactive != "Y" ? array_push($array, "User account is not active") : false ;
+                    $checkSessionToken->loginattempts >= 3 ? array_push($array, "User account is locked") : false ;
+                    strtotime($checkSessionToken->accesstoken_expiry) < time() ? array_push($array, "Access token has expired") : false;
+                    
+                    if(!empty($array)){
+                        status401($array);
+                    } else {
+                        $this->_userId = $checkSessionToken->session_user_id;
+                        $this->_userRole = $checkSessionToken->role;
+                    }
+                }
+            }
+
             $this->cartModel = $this->model($this->singular);
         }
 
@@ -45,7 +69,14 @@
 
                 $error_message = [];
                 $checkUsername = $this->cartModel->checkUsername(sanitizeString($jsonData->username));
-                empty($checkUsername) ? array_push($error_message, "Username does not exist. Please try again.") : false;
+
+                if(empty($checkUsername) && $this->_userRole === "Admin"){
+                    empty($checkUsername) ? array_push($error_message, "Username does not exist. Please try again.") : false;
+                } elseif(!empty($checkUsername) && $this->_userId !== $checkUsername->user_id){
+                    array_push($error_message, "Username does not match the logged in username. Please try again.");
+                } elseif(empty($checkUsername)) {
+                    array_push($error_message, "Username does not match the logged in username. Please try again.");
+                }
                 
                 $checkProduct = $this->cartModel->checkProduct(sanitizeString($jsonData->product));
                 empty($checkProduct) ? array_push($error_message, "Product does not exist. Please try again.") : false;
@@ -81,7 +112,7 @@
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){
                 if($id == ""){
-                    $carts = $this->cartModel->getAllCartItems();
+                    $carts = $this->cartModel->getAllCartItems($this->_userRole, $this->_userId);
                     $rows = count($carts);
                     
                     foreach($carts as $cart){

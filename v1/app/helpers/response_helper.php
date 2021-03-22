@@ -75,11 +75,19 @@
         exit;
     }
 
-    function status401($message){
+    function status401($e){
         $response = new Response;
         $response->setHttpStatusCode(401);
         $response->setSuccess(false);
-        $response->addMessage([$message]);
+
+        if(is_array($e)){
+            $response->addMessage($e);
+        }elseif(is_string($e)){
+            $response->addMessage([$e]);
+        } else {
+            $response->addMessage($e->getMessage());
+        }
+
         $response->send();
         exit;
     }
