@@ -58,6 +58,27 @@
         exit;
     }
 
+    function status307($returnData, $table = ""){
+        $response = new Response;
+        $response->setHttpStatusCode(307);
+        $response->setSuccess(true);
+
+        if(isset($returnData[$table]["message"])){
+            $response->addMessage($returnData[$table]["message"]);
+            unset($returnData[$table]["message"]);
+        }
+        
+        if(is_array($returnData)){
+            $response->setData($returnData);
+        } else {
+            $response->addMessage($returnData);
+        }
+
+        $response->setData($returnData);
+        $response->send();
+        exit;
+    }
+
     function status400($e){
         $response = new Response;
         $response->setHttpStatusCode(400);

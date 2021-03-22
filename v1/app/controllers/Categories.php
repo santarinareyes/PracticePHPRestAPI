@@ -2,14 +2,39 @@
     class Categories extends BaseController {
         private $singular = "Category";
         private $plural = "categories";
+        private $_userId = "";
+        private $_userRole = "";
+        private $_username = "";
 
         public function __construct()
         {
+            if(isLoggedIn(isset($_SERVER['HTTP_AUTHORIZATION']))){
+                $this->sessionModel = $this->model('Session');
+                $checkSessionToken = $this->sessionModel->checkSessionToken($_SERVER['HTTP_AUTHORIZATION']);
+                empty($checkSessionToken) ? status401("Invalid Access Token") : false ;
+
+                
+                if(count(array($checkSessionToken)) > 0){
+                    
+                    $array = [];
+                    $checkSessionToken->isactive != "Y" ? array_push($array, "User account is not active") : false ;
+                    $checkSessionToken->loginattempts >= 3 ? array_push($array, "User account is locked") : false ;
+                    strtotime($checkSessionToken->accesstoken_expiry) < time() ? array_push($array, "Access token has expired") : false;
+                    
+                    if(!empty($array)){
+                        status401($array);
+                    } else {
+                        $this->_userId = $checkSessionToken->session_user_id;
+                        $this->_userRole = $checkSessionToken->role;
+                        $this->_username = $checkSessionToken->username;
+                    }
+                }
+            }
             $this->categoryModel = $this->model($this->singular);
         }
 
         public function index($id = ""){
-            if($_SERVER['REQUEST_METHOD'] === 'POST'){
+            if($_SERVER['REQUEST_METHOD'] === 'POST' && $this->_userRole === 'Admin'){
                 if($_SERVER['CONTENT_TYPE'] !== 'application/json'){
                     status400("Content type header is not set to JSON");
                 }
@@ -63,7 +88,7 @@
                     }
                 }
 
-            } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){
+            } elseif($_SERVER['REQUEST_METHOD'] === 'GET' && $this->_userRole === 'Admin'){
                 if($id == ""){
                     $categories = $this->categoryModel->getAllCategories();
                     $rows = count($categories);
@@ -101,7 +126,7 @@
                     status404("$this->singular not found");
                 }
 
-            } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH'){
+            } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH' && $this->_userRole === 'Admin'){
                 if($id === "" || !is_numeric($id)){
                     status400("$this->singular Id cannot be empty and must be numeric");
                 }
@@ -169,7 +194,7 @@
                     status404("$this->singular not found");
                 endif;
                 
-            } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
+            } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE' && $this->_userRole === 'Admin'){
                 if($id === ""){
                     status404("No $this->singular found to delete");
                 }
@@ -206,7 +231,7 @@
         }
 
         public function page($currentPage = ""){
-            if($_SERVER['REQUEST_METHOD'] === 'GET'){
+            if($_SERVER['REQUEST_METHOD'] === 'GET' && $this->_userRole === 'Admin'){
                 if($currentPage == "" || !is_numeric($currentPage)){
                     status400("Page cannot be empty or must be numeric");
                 }

@@ -67,10 +67,13 @@
             return $this->db->resultSet("There was an issue fetching all cart items");
         }
 
-        public function getAllCartTotals(){
+        public function getAllCartTotals($loggedInUserRole, $loggedInUserId){
+            $AdminOrUser = "";
+            $loggedInUserRole == 'User' ? $AdminOrUser = "WHERE user_id = ".$loggedInUserId : "";
             $this->db->query("SELECT u.user_id, u.username, SUM(p.product_price) AS total FROM carts c 
                               INNER JOIN users u ON c.cart_user_id = u.user_id 
                               INNER JOIN products p ON c.cart_product_id = p.product_id 
+                              $AdminOrUser
                               GROUP BY u.username ASC");
             return $this->db->resultSet("There was an issue fetching carts info");
         }
@@ -103,7 +106,7 @@
         }
 
         public function checkCartItem($id){
-            $this->db->query("SELECT u.username, c.cart_id, p.product_title, p.product_price FROM carts c 
+            $this->db->query("SELECT c.cart_user_id, u.username, c.cart_id, p.product_title, p.product_price FROM carts c 
                               INNER JOIN products p ON c.cart_product_id = p.product_id 
                               INNER JOIN users u ON c.cart_user_id = u.user_id 
                               WHERE c.cart_id = :id");

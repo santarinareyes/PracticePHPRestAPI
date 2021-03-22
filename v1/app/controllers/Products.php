@@ -2,15 +2,43 @@
     class Products extends BaseController {
         private $singular = "Product";
         private $plural = "products";
+        private $_userId = "";
+        private $_userRole = "";
+        private $_username = "";
 
         public function __construct()
-        {
+        {   
             $this->productModel = $this->model($this->singular);
             $this->categoryModel = $this->model('Category');
         }
 
         public function index($id = ""){
             if($_SERVER['REQUEST_METHOD'] === 'POST'){
+                if(isLoggedIn(isset($_SERVER['HTTP_AUTHORIZATION']))){
+                    $this->sessionModel = $this->model('Session');
+                    $checkSessionToken = $this->sessionModel->checkSessionToken($_SERVER['HTTP_AUTHORIZATION']);
+                    empty($checkSessionToken) ? status401("Invalid Access Token") : false ;
+    
+                    
+                    if(count(array($checkSessionToken)) > 0){
+                        
+                        $array = [];
+                        $checkSessionToken->isactive != "Y" ? array_push($array, "User account is not active") : false ;
+                        $checkSessionToken->loginattempts >= 3 ? array_push($array, "User account is locked") : false ;
+                        strtotime($checkSessionToken->accesstoken_expiry) < time() ? array_push($array, "Access token has expired") : false;
+                        
+                        if(!empty($array)){
+                            status401($array);
+                        } else {
+                            $this->_userId = $checkSessionToken->session_user_id;
+                            $this->_userRole = $checkSessionToken->role;
+                            $this->_username = $checkSessionToken->username;
+                        }
+                    }
+                }
+
+                $this->_userRole !== 'Admin' ? status405("Request method not allowed") : false;
+
                 if($_SERVER['CONTENT_TYPE'] !== 'application/json'){
                     status400("Content type header is not set to JSON");
                 }
@@ -129,6 +157,31 @@
                 }
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'PATCH'){
+                if(isLoggedIn(isset($_SERVER['HTTP_AUTHORIZATION']))){
+                    $this->sessionModel = $this->model('Session');
+                    $checkSessionToken = $this->sessionModel->checkSessionToken($_SERVER['HTTP_AUTHORIZATION']);
+                    empty($checkSessionToken) ? status401("Invalid Access Token") : false ;
+    
+                    
+                    if(count(array($checkSessionToken)) > 0){
+                        
+                        $array = [];
+                        $checkSessionToken->isactive != "Y" ? array_push($array, "User account is not active") : false ;
+                        $checkSessionToken->loginattempts >= 3 ? array_push($array, "User account is locked") : false ;
+                        strtotime($checkSessionToken->accesstoken_expiry) < time() ? array_push($array, "Access token has expired") : false;
+                        
+                        if(!empty($array)){
+                            status401($array);
+                        } else {
+                            $this->_userId = $checkSessionToken->session_user_id;
+                            $this->_userRole = $checkSessionToken->role;
+                            $this->_username = $checkSessionToken->username;
+                        }
+                    }
+                }
+
+                $this->_userRole !== 'Admin' ? status405("Request method not allowed") : false;
+
                 if($id === "" || !is_numeric($id)){
                     status400("$this->singular Id cannot be empty and must be numeric");
                 }
@@ -249,6 +302,31 @@
                 endif;
                 
             } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
+                if(isLoggedIn(isset($_SERVER['HTTP_AUTHORIZATION']))){
+                    $this->sessionModel = $this->model('Session');
+                    $checkSessionToken = $this->sessionModel->checkSessionToken($_SERVER['HTTP_AUTHORIZATION']);
+                    empty($checkSessionToken) ? status401("Invalid Access Token") : false ;
+    
+                    
+                    if(count(array($checkSessionToken)) > 0){
+                        
+                        $array = [];
+                        $checkSessionToken->isactive != "Y" ? array_push($array, "User account is not active") : false ;
+                        $checkSessionToken->loginattempts >= 3 ? array_push($array, "User account is locked") : false ;
+                        strtotime($checkSessionToken->accesstoken_expiry) < time() ? array_push($array, "Access token has expired") : false;
+                        
+                        if(!empty($array)){
+                            status401($array);
+                        } else {
+                            $this->_userId = $checkSessionToken->session_user_id;
+                            $this->_userRole = $checkSessionToken->role;
+                            $this->_username = $checkSessionToken->username;
+                        }
+                    }
+                }
+
+                $this->_userRole !== 'Admin' ? status405("Request method not allowed") : false;
+                
                 if($id === ""){
                     status404("$this->singular Id cannot be empty");
                 }

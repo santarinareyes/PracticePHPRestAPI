@@ -119,7 +119,7 @@
         }
 
         public function checkSessionToken($accesstoken){
-            $this->db->query("SELECT s.session_user_id, u.role, s.accesstoken_expiry, 
+            $this->db->query("SELECT s.session_user_id, u.role, u.username, s.accesstoken_expiry, 
                               u.isactive, u.loginattempts FROM sessions s
                               INNER JOIN users u ON s.session_user_id = u.user_id 
                               WHERE s.accesstoken = :accesstoken");

@@ -4,6 +4,7 @@
         private $plural = "carts";
         private $_userId = "";
         private $_userRole = "";
+        private $_username = "";
 
         public function __construct()
         {
@@ -25,6 +26,7 @@
                     } else {
                         $this->_userId = $checkSessionToken->session_user_id;
                         $this->_userRole = $checkSessionToken->role;
+                        $this->_username = $checkSessionToken->username;
                     }
                 }
             }
@@ -72,15 +74,19 @@
 
                 if(empty($checkUsername) && $this->_userRole === "Admin"){
                     empty($checkUsername) ? array_push($error_message, "Username does not exist. Please try again.") : false;
-                } elseif(!empty($checkUsername) && $this->_userId !== $checkUsername->user_id){
+                } 
+                
+                if(!empty($checkUsername) && $this->_userId != $checkUsername->user_id && $this->_userRole !== "Admin"){
                     array_push($error_message, "Username does not match the logged in username. Please try again.");
-                } elseif(empty($checkUsername)) {
+                } 
+                
+                if(empty($checkUsername)) {
                     array_push($error_message, "Username does not match the logged in username. Please try again.");
                 }
                 
                 $checkProduct = $this->cartModel->checkProduct(sanitizeString($jsonData->product));
                 empty($checkProduct) ? array_push($error_message, "Product does not exist. Please try again.") : false;
-                empty($checkUsername) || empty($checkProduct) ? status400($error_message) : false;
+                !empty($error_message) ? status400($error_message) : false;
 
                 $data = [
                     "user" => $checkUsername->user_id,
@@ -126,7 +132,7 @@
                 }
 
                 if($id == "total"){
-                    $cartTotals = $this->cartModel->getAllCartTotals();
+                    $cartTotals = $this->cartModel->getAllCartTotals($this->_userRole, $this->_userId);
                     $rows = count($cartTotals);
 
                     
@@ -142,7 +148,14 @@
 
                 if(!is_numeric($id)){
                     $checkUsername = $this->cartModel->checkUsername($id);
-                    empty($checkUsername) ? status400("Username does not exist. Please try again.") : false;
+                    
+                    if(empty($checkUsername) && $this->_userRole === "Admin"){
+                        empty($checkUsername) ? status400("Username does not exist. Please try again.") : false;
+                    } elseif(!empty($checkUsername) && $this->_username !== $checkUsername->username && $this->_userRole !== "Admin"){
+                        status400("Username does not match the logged in username. Please try again.");
+                    } elseif(empty($checkUsername)) {
+                        status400("Username does not match the logged in username. Please try again.");
+                    }
 
                     $userTotal = $this->cartModel->getUserCartTotal($id);
                     $rows = count(array($userTotal));
@@ -165,7 +178,14 @@
 
                 if(is_numeric($id)){
                     $checkUsername = $this->cartModel->checkUserId($id);
-                    empty($checkUsername) ? status400("User Id does not exist. Please try again.") : false;
+
+                    if(empty($checkUsername) && $this->_userRole === "Admin"){
+                        empty($checkUsername) ? status400("User Id does not exist. Please try again.") : false;
+                    } elseif(!empty($checkUsername) && $this->_userId !== $checkUsername->user_id && $this->_userRole !== "Admin"){
+                        status400("User Id does not match the logged in user Id. Please try again.");
+                    } elseif(empty($checkUsername)) {
+                        status400("User Id does not match the logged in user Id. Please try again.");
+                    }
 
                     $userTotal = $this->cartModel->getIdCartTotal($id);
                     $rows = count(array($userTotal));
@@ -188,12 +208,20 @@
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'DELETE'){
                 if($id === ""){
-                    status404("Please specify an Id or Username");
+                    status404("Please specify a cart item Id to delete single items or your Username to delete all items in your cart");
                 }
 
                 if(!is_numeric($id)){
                     $checkUsername = $this->cartModel->checkUsername($id);
-                    empty($checkUsername) ? status400("Username does not exist. Please try again.") : false;
+                    
+                    if(empty($checkUsername) && $this->_userRole === "Admin"){
+                        empty($checkUsername) ? status400("Username does not exist. Please try again.") : false;
+                    } elseif(!empty($checkUsername) && $this->_username !== $checkUsername->username && $this->_userRole !== "Admin"){
+                        status400("Username does not match the logged in username. Please try again.");
+                    } elseif(empty($checkUsername)) {
+                        status400("Username does not match the logged in username. Please try again.");
+                    }
+                    
                     $userTotal = $this->cartModel->getUserCartTotal($id);
                     
                     if($userTotal){
@@ -217,8 +245,16 @@
                 }
 
                 $checkCartItem = $this->cartModel->checkCartItem($id);
-                empty($checkCartItem) ? status400("Cart item does not exist. Please try again.") : false;
+                // empty($checkCartItem) ? status400("Cart item does not exist. Please try again.") : false;
                 
+                if(empty($checkCartItem) && $this->_userRole === "Admin"){
+                    empty($checkCartItem) ? status400("Cart item does not exist. Please try again.") : false;
+                } elseif(!empty($checkCartItem) && $this->_userId !== $checkCartItem->cart_user_id && $this->_userRole !== "Admin"){
+                    status400("Cart item Id does not belong to the logged in user or the cart item Id does not exist. Please try again.");
+                } elseif(empty($checkCartItem)) {
+                    status400("Cart item Id does not belong to the logged in user or the cart item Id does not exist. Please try again.");
+                }
+
                 if($checkCartItem){
                     $deleteUserCart = $this->cartModel->deleteCartItem($id);
                     $rows = $deleteUserCart === true ? 1 : status500("Failed to delete $this->singular");
@@ -244,7 +280,7 @@
         }
 
         public function page($currentPage = ""){
-            if($_SERVER['REQUEST_METHOD'] === 'GET'){
+            if($_SERVER['REQUEST_METHOD'] === 'GET' && $this->_userRole === 'Admin'){
                 if($currentPage == "" || !is_numeric($currentPage)){
                     status400("Page cannot be empty or must be numeric");
                 }
