@@ -90,7 +90,7 @@ The features are simple and we follow the CRUD principles.
 | `GET` | /carts/total | [![made-with-python](https://img.shields.io/badge/Admin-1f425f.svg)](#) - show all active carts with total price of products in cart |
 | `GET` | /carts/user | [![made-with-python](https://img.shields.io/badge/Admin-1f425f.svg)](#) - show a users added products in carts |
 | `DELETE` | /carts/1 | [![made-with-python](https://img.shields.io/badge/Admin-1f425f.svg)](#) [![Generic badge](https://img.shields.io/badge/User-<COLOR>.svg)](https://shields.io/) - delete cart(item) id 1 - Users can delete products from their own cart |
-| `DELETE` | /carts/username | [![made-with-python](https://img.shields.io/badge/Admin-1f425f.svg)](#) [![Generic badge](https://img.shields.io/badge/User-<COLOR>.svg)](https://shields.io/) - delete/username - Admin can delete a users cart. A user can delete their own cart |
+| `DELETE` | /carts/username | [![made-with-python](https://img.shields.io/badge/Admin-1f425f.svg)](#) [![Generic badge](https://img.shields.io/badge/User-<COLOR>.svg)](https://shields.io/) - delete/username - Admin can delete a users cart. A user can delete their own |
 
 ## How to
 <details>
