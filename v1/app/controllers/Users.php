@@ -110,6 +110,31 @@
                 }
 
             } elseif($_SERVER['REQUEST_METHOD'] === 'GET'){
+                if(isLoggedIn(isset($_SERVER['HTTP_AUTHORIZATION']))){
+                    $this->sessionModel = $this->model('Session');
+                    $checkSessionToken = $this->sessionModel->checkSessionToken($_SERVER['HTTP_AUTHORIZATION']);
+                    empty($checkSessionToken) ? status401("Invalid Access Token") : false ;
+    
+                    
+                    if(count(array($checkSessionToken)) > 0){
+                        
+                        $array = [];
+                        $checkSessionToken->isactive != "Y" ? array_push($array, "User account is not active") : false ;
+                        $checkSessionToken->loginattempts >= 3 ? array_push($array, "User account is locked") : false ;
+                        strtotime($checkSessionToken->accesstoken_expiry) < time() ? array_push($array, "Access token has expired") : false;
+                        
+                        if(!empty($array)){
+                            status401($array);
+                        } else {
+                            $this->_userId = $checkSessionToken->session_user_id;
+                            $this->_userRole = $checkSessionToken->role;
+                            $this->_username = $checkSessionToken->username;
+                        }
+                    }
+                }
+
+                $this->_userRole !== 'Admin' ? status405("Request method not allowed") : false;
+                
                 if($id == ""){
                     $users = $this->userModel->getAllUsers();
                     $rows = count($users);
