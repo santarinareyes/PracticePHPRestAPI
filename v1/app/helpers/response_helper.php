@@ -1,6 +1,6 @@
 <?php
     /*
-     * These functions create a new Response class from Response.php in libs
+     * These functions creates a new Response class from Response.php in libs
      * and build up the messages displayed
      */
     function PDOException($e, $message) {

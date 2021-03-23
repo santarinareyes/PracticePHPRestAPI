@@ -1,4 +1,7 @@
 <?php 
+    /*
+     * Return true if access token is provided
+     */
     function isLoggedIn($http_authorization){
         if(!isset($_SERVER['HTTP_AUTHORIZATION']) || strlen($http_authorization) < 1){
             $error_array = [];

@@ -1,4 +1,8 @@
 <?php 
+    /*
+     * Use $this->db::connectMasterDB() to connect to the master database
+     * Use $this->db::connectReadDB() to connect to the read database
+     */
     class Session {
         private $db;
 

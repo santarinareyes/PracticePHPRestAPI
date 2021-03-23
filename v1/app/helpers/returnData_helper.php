@@ -1,4 +1,8 @@
 <?php 
+    /*
+     * This functions will return another array with the values inside an array
+     * and act accordingly. We then use the response helper to display.
+     */
     function returnData($rows, $array) {
         if(!empty($rows)){
             $returnData['rows_returned'] = $rows;
